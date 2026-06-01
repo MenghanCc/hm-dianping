@@ -21,8 +21,8 @@ import static com.hmdp.utils.SystemConstants.USER_NICK_NAME_PREFIX;
  * 服务实现类
  * </p>
  *
- * @author 虎哥
- * @since 2021-12-22
+ * @author 陈俊杰
+ * @since 2026-01-01
  */
 @Slf4j
 @Service
