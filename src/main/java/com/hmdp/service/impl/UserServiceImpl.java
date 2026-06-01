@@ -2,6 +2,7 @@ package com.hmdp.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hmdp.dto.LoginFormDTO;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.UserMapper;
@@ -12,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpSession;
+
+import static com.hmdp.utils.SystemConstants.USER_NICK_NAME_PREFIX;
 
 /**
  * <p>
@@ -43,5 +46,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
 
         return Result.ok();
+    }
+
+    @Override
+    public Result login(LoginFormDTO loginForm, HttpSession session) {
+
+        // 校验手机号和验证码
+        if (RegexUtils.isPhoneInvalid(loginForm.getPhone())) {
+            return Result.fail("手机号格式错误,请重新输入");
+        }
+
+        Object cacheCode = session.getAttribute("code"); // session是存储任意类型对象
+        String code = (String) loginForm.getCode();
+
+        if(code == null || !cacheCode.toString().equals(code)) {
+            return Result.fail("验证码错误");
+        }
+
+        // 如果一致则根据手机号查询用户（使用MyBatisPlus）
+        User user = query().eq("phone", loginForm.getPhone()).one();
+        if (user == null) {
+            // 如果用户不存在，创建一个用户。并且将手机号返回给变量user
+            user = createUserWithPhone(loginForm.getPhone());
+        }
+
+        // 保存用户信息到session中
+        session.setAttribute("user", user);
+
+        return Result.ok();
+    }
+
+    private User createUserWithPhone(String phone) {
+        User user = new User();
+        user.setPhone(phone);
+        user.setNickName(USER_NICK_NAME_PREFIX + RandomUtil.randomNumbers(10));
+        save(user); // MP
+        return user;
     }
 }
